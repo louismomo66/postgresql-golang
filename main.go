@@ -1,42 +1,66 @@
 package main
 
 import (
+	"go_postgtresql_pgx/controllers"
 	"go_postgtresql_pgx/database"
+	"go_postgtresql_pgx/models"
 	"log"
+	"time"
 )
 
 func main() {
 
 	db := database.ConnectDB()
+	// Migrate the schema
+	db.AutoMigrate(&models.Person{})
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Fatalf("Failed to get the underlying sql.DB: %v", err)
 	}
 	defer sqlDB.Close()
+	// controllers.DeletePerson(db, 9)
+	dateOfBirth := time.Date(1996, time.June, 23, 0, 0, 0, 0, time.UTC)
+	updatedData := map[string]interface{}{"FirstName": "Jane", "LastName": "Doe", "DateOfBirth": dateOfBirth}
+	controllers.UpdatePerson(db, 10, updatedData)
+	// newPerson := models.Person{FirstName: "Tom", LastName: "Dumba", DateOfBirth: time.Now()}
+	// controllers.CreatNew(db, newPerson)
+	// getting all persons
+	persons, err := controllers.GetAll(db)
+	if err != nil {
+		log.Fatalf("Failed to get all error: %v", err)
+	}
 
-	// // getting all persons
-	// persons, err := controllers.GetAll(dbpool)
-	// if err != nil {
-	// 	log.Printf("Error retrieving persons %v\n", err)
+	for _, person := range persons {
+		log.Printf("ID: %d, Name: %s %s, DOB: %s\n", person.ID, person.FirstName, person.LastName, person.DateOfBirth.Format("2006-01-02"))
+	}
 
-	// }
-
-	// for _, person := range persons {
-	// 	log.Printf("ID: %d, Name: %s %s, DOB: %s \n", person.ID, person.FirstName, person.LastName, person.DateOfBirth.Format("2006-01-02"))
-	// }
-	// // creating a new person
-	// dateOfBirth := time.Date(1996, time.June, 23, 0, 0, 0, 0, time.UTC)
-	// // person, err := controllers.CreateNew(dbpool, "Joseph", "Damulila", dateOfBirth)
-	// // if err != nil {
-	// // 	log.Fatalf("Error creating person %v", err)
-	// // }
-	// // log.Println("Created new person:", person)
-	// updated, err := controllers.UpdatePerson(dbpool, 6, "Jonas", "Excellency", dateOfBirth)
-	// if err != nil {
-	// 	log.Fatalf("Failed to update %v\n", err)
-	// }
-	// log.Println("Updated: ", updated)
-	// individual := controllers.GetOne(dbpool, 6)
-	// log.Println("Individual: ", individual)
-
+	//get one person
+	person := controllers.GetOne(db, 6)
+	log.Println(person)
 }
+
+// // getting all persons
+// persons, err := controllers.GetAll(dbpool)
+// if err != nil {
+// 	log.Printf("Error retrieving persons %v\n", err)
+
+// }
+
+// for _, person := range persons {
+// 	log.Printf("ID: %d, Name: %s %s, DOB: %s \n", person.ID, person.FirstName, person.LastName, person.DateOfBirth.Format("2006-01-02"))
+// }
+// // creating a new person
+// dateOfBirth := time.Date(1996, time.June, 23, 0, 0, 0, 0, time.UTC)
+// // person, err := controllers.CreateNew(dbpool, "Joseph", "Damulila", dateOfBirth)
+// // if err != nil {
+// // 	log.Fatalf("Error creating person %v", err)
+// // }
+// // log.Println("Created new person:", person)
+// updated, err := controllers.UpdatePerson(dbpool, 6, "Jonas", "Excellency", dateOfBirth)
+// if err != nil {
+// 	log.Fatalf("Failed to update %v\n", err)
+// }
+// log.Println("Updated: ", updated)
+// individual := controllers.GetOne(dbpool, 6)
+// log.Println("Individual: ", individual)
