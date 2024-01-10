@@ -1,9 +1,14 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
+	"go_postgtresql_pgx/database"
 	"go_postgtresql_pgx/models"
 	"log"
+	"net/http"
 
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -28,13 +33,23 @@ import (
 
 //		return persons, nil
 //	}
-func GetAll(db *gorm.DB) ([]models.Person, error) {
+//
+//	func GetAll(db *gorm.DB) ([]models.Person, error) {
+//		var persons []models.Person
+//		results := db.Find(&persons)
+//		if results.Error != nil {
+//			return nil, results.Error
+//		}
+//		return persons, nil
+//	}
+func GetAll(w http.ResponseWriter, r *http.Request) {
 	var persons []models.Person
-	results := db.Find(&persons)
+	results := database.DB.Find(&persons)
 	if results.Error != nil {
-		return nil, results.Error
+		http.Error(w, results.Error.Error(), http.StatusInternalServerError)
+		return
 	}
-	return persons, nil
+	json.NewEncoder(w).Encode(persons)
 }
 
 // func CreateNew(dbpool *pgxpool.Pool, firstname, lastname string, dateofbirth time.Time) (models.Person, error) {
@@ -85,11 +100,21 @@ func UpdatePerson(db *gorm.DB, id int, updateData map[string]interface{}) {
 // }
 
 // get one person
-func GetOne(db *gorm.DB, id int) models.Person {
+//
+//	func GetOne(db *gorm.DB, id int) models.Person {
+//		var p models.Person
+//		result := db.First(&p, id)
+//		if result.Error != nil {
+//			log.Fatalf("Non existent %v\n", result.Error)
+//		}
+//		return p
+//	}
+func GetOne(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
 	var p models.Person
-	result := db.First(&p, id)
-	if result.Error != nil {
-		log.Fatalf("Non existent %v\n", result.Error)
+	if err := database.DB.Where("id = ?", id).First(&p).Error; err != nil {
+		fmt.Fprintf(w, "Error: %v", err)
+		return
 	}
-	return p
+	json.NewEncoder(w).Encode(p)
 }

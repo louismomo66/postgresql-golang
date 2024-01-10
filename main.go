@@ -3,42 +3,50 @@ package main
 import (
 	"go_postgtresql_pgx/controllers"
 	"go_postgtresql_pgx/database"
-	"go_postgtresql_pgx/models"
 	"log"
-	"time"
+	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
+	r := mux.NewRouter()
 
-	db := database.ConnectDB()
-	// Migrate the schema
-	db.AutoMigrate(&models.Person{})
+	database.ConnectDB()
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Fatalf("Failed to get the underlying sql.DB: %v", err)
-	}
-	defer sqlDB.Close()
-	// controllers.DeletePerson(db, 9)
-	dateOfBirth := time.Date(1996, time.June, 23, 0, 0, 0, 0, time.UTC)
-	updatedData := map[string]interface{}{"FirstName": "Jane", "LastName": "Doe", "DateOfBirth": dateOfBirth}
-	controllers.UpdatePerson(db, 10, updatedData)
-	// newPerson := models.Person{FirstName: "Tom", LastName: "Dumba", DateOfBirth: time.Now()}
-	// controllers.CreatNew(db, newPerson)
-	// getting all persons
-	persons, err := controllers.GetAll(db)
-	if err != nil {
-		log.Fatalf("Failed to get all error: %v", err)
-	}
-
-	for _, person := range persons {
-		log.Printf("ID: %d, Name: %s %s, DOB: %s\n", person.ID, person.FirstName, person.LastName, person.DateOfBirth.Format("2006-01-02"))
-	}
-
-	//get one person
-	person := controllers.GetOne(db, 6)
-	log.Println(person)
+	// sqlDB, err := db.DB()
+	// if err != nil {
+	// 	log.Fatalf("Failed to get the underlying sql.DB: %v", err)
+	// }
+	// defer sqlDB.Close()
+	r.HandleFunc("/people", controllers.GetAll).Methods("GET")
+	r.HandleFunc("/people/{id}", controllers.GetOne).Methods("GET")
+	log.Fatal(http.ListenAndServe(":8000", r))
 }
+
+// r.HandelFunc("/people/{id}", controllers.GetOne()).Methods("GET")
+// r.HandelFunc("/people", controllers.CreatNew()).Methods("POST")
+// r.HandelFunc("/people/{id}", controllers.DeletePerson()).Methods("DELETE")
+// controllers.DeletePerson(db, 9)
+// dateOfBirth := time.Date(1996, time.June, 23, 0, 0, 0, 0, time.UTC)
+// updatedData := map[string]interface{}{"FirstName": "Jane", "LastName": "Doe", "DateOfBirth": dateOfBirth}
+// controllers.UpdatePerson(db, 10, updatedData)
+// newPerson := models.Person{FirstName: "Tom", LastName: "Dumba", DateOfBirth: time.Now()}
+// controllers.CreatNew(db, newPerson)
+// getting all persons
+// persons, err := controllers.GetAll(db)
+// if err != nil {
+// 	log.Fatalf("Failed to get all error: %v", err)
+// }
+
+// for _, person := range persons {
+// 	log.Printf("ID: %d, Name: %s %s, DOB: %s\n", person.ID, person.FirstName, person.LastName, person.DateOfBirth.Format("2006-01-02"))
+// }
+
+// //get one person
+// person := controllers.GetOne(db, 6)
+// log.Println(person)
+// }
 
 // // getting all persons
 // persons, err := controllers.GetAll(dbpool)

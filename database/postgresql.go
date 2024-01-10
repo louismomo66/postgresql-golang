@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"go_postgtresql_pgx/models"
 	"log"
 	"os"
 
@@ -11,7 +12,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func ConnectDB() *gorm.DB {
+var DB *gorm.DB
+
+func ConnectDB() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Printf("Error loading .env file: %v\n", err)
@@ -38,5 +41,7 @@ func ConnectDB() *gorm.DB {
 		log.Fatalf("Failed to initialize GORM: %v", err)
 	}
 	log.Println("Connected to database using GORM and pgx")
-	return gormDB
+	// Migrate the schema
+	gormDB.AutoMigrate(&models.Person{})
+	DB = gormDB
 }
