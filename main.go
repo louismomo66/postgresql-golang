@@ -13,16 +13,19 @@ func main() {
 	r := mux.NewRouter()
 
 	database.ConnectDB()
-
-	// sqlDB, err := db.DB()
-	// if err != nil {
-	// 	log.Fatalf("Failed to get the underlying sql.DB: %v", err)
-	// }
-	// defer sqlDB.Close()
 	r.HandleFunc("/people", controllers.GetAll).Methods("GET")
 	r.HandleFunc("/people/{id}", controllers.GetOne).Methods("GET")
+	r.HandleFunc("/people", controllers.CreatNew).Methods("POST")
+	r.HandleFunc("/people/{id}", controllers.UpdatePerson).Methods("PUT")
+	r.HandleFunc("/people/{id}", controllers.DeletePerson).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
+
+// sqlDB, err := db.DB()
+// if err != nil {
+// 	log.Fatalf("Failed to get the underlying sql.DB: %v", err)
+// }
+// defer sqlDB.Close()
 
 // r.HandelFunc("/people/{id}", controllers.GetOne()).Methods("GET")
 // r.HandelFunc("/people", controllers.CreatNew()).Methods("POST")
