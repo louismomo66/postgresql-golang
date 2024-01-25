@@ -3,6 +3,7 @@ package main
 import (
 	"go_postgtresql_pgx/controllers"
 	"go_postgtresql_pgx/database"
+	"go_postgtresql_pgx/routes"
 	"log"
 	"net/http"
 
@@ -12,12 +13,13 @@ import (
 func main() {
 	r := mux.NewRouter()
 
-	database.ConnectDB()
-	r.HandleFunc("/people", controllers.GetAll).Methods("GET")
-	r.HandleFunc("/people/{id}", controllers.GetOne).Methods("GET")
-	r.HandleFunc("/people", controllers.CreatNew).Methods("POST")
-	r.HandleFunc("/people/{id}", controllers.UpdatePerson).Methods("PUT")
-	r.HandleFunc("/people/{id}", controllers.DeletePerson).Methods("DELETE")
+	db, err := database.ConnectDB()
+	if err != nil {
+		log.Fatalf("err:%v\n", err)
+	}
+	personControler := controllers.NewPersonController(db)
+
+	routes.SetUpRoutes(r, personControler)
 	log.Fatal(http.ListenAndServe(":8000", r))
 }
 

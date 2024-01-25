@@ -2,41 +2,48 @@ package controllers
 
 import (
 	"encoding/json"
-	"go_postgtresql_pgx/database"
 	"go_postgtresql_pgx/models"
 	"go_postgtresql_pgx/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
-func GetAll(w http.ResponseWriter, r *http.Request) {
+type PersonController struct {
+	DB *gorm.DB
+}
+
+func NewPersonController(db *gorm.DB) *PersonController {
+	return &PersonController{DB: db}
+}
+func (pc *PersonController) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	var persons []models.Person
-	results := database.DB.Find(&persons)
+	results := pc.DB.Find(&persons)
 	if results.Error != nil {
 		http.Error(w, results.Error.Error(), http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(persons)
 }
-func GetOne(w http.ResponseWriter, r *http.Request) {
+func (pc *PersonController) GetOne(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	var p models.Person
-	if err := database.DB.Where("id = ?", id).First(&p).Error; err != nil {
+	if err := pc.DB.Where("id = ?", id).First(&p).Error; err != nil {
 		utils.RespondWithError(w, http.StatusNotFound, "person not found")
 		return
 	}
 	json.NewEncoder(w).Encode(p)
 }
-func CreatNew(w http.ResponseWriter, r *http.Request) {
+func (pc *PersonController) CreatNew(w http.ResponseWriter, r *http.Request) {
 	var p models.Person
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	result := database.DB.Create(&p)
+	result := pc.DB.Create(&p)
 	if result.Error != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, result.Error.Error())
 		return
@@ -46,27 +53,27 @@ func CreatNew(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(p)
 }
-func DeletePerson(w http.ResponseWriter, r *http.Request) {
+func (pc *PersonController) DeletePerson(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 
 	var p models.Person
-	if err := database.DB.Where("id = ?", id).First(&p).Error; err != nil {
+	if err := pc.DB.Where("id = ?", id).First(&p).Error; err != nil {
 		utils.RespondWithError(w, http.StatusNotFound, "Person not there")
 		return
 	}
 
-	database.DB.Delete(&p)
+	pc.DB.Delete(&p)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 	json.NewEncoder(w).Encode(p)
 }
-func UpdatePerson(w http.ResponseWriter, r *http.Request) {
+func (pc *PersonController) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	var p models.Person
-	if err := database.DB.Where("id = ?", id).First(&p).Error; err != nil {
+	if err := pc.DB.Where("id = ?", id).First(&p).Error; err != nil {
 		utils.RespondWithError(w, http.StatusNotFound, "Person not there")
 		return
 	}
@@ -81,7 +88,7 @@ func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	newp.LastName = p.LastName
 	newp.DateOfBirth = p.DateOfBirth
 
-	database.DB.Save(&newp)
+	pc.DB.Save(&newp)
 	w.Header().Set("Content-type", "application/json")
 	json.NewEncoder(w).Encode(newp)
 }
